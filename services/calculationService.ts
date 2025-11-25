@@ -1,51 +1,127 @@
-import { CalculatorInputs, CalculationResults } from '../types';
-import { TILE_DATA } from '../constants';
+import { CalculatorInputs, CalculationResults, TileCategory } from '../types';
+import { 
+  TILE_DATA, 
+  RAFTER_SPACING_METERS,
+  SPACING_FIBROCIMENTO,
+  SPACING_ECOLOGICA,
+  WOOD_LOSS_MARGIN,
+  SCREWS_PER_TILE_FIBROCIMENTO,
+  SCREWS_PER_TILE_ECOLOGICA
+} from '../constants';
+
+// SECURITY CONSTANTS
+const MAX_DIMENSION = 1000; 
+const MAX_SLOPE = 300; 
+
+const sanitizeNumber = (value: number, max: number): number => {
+  if (typeof value !== 'number' || Number.isNaN(value) || !Number.isFinite(value)) {
+    return 0;
+  }
+  return Math.min(Math.max(0, Math.abs(value)), max);
+};
 
 export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
-  const { width, length, slope, category, tileModelId } = inputs;
+  try {
+    // 1. Input Sanitization
+    const width = sanitizeNumber(inputs.width, MAX_DIMENSION);
+    const length = sanitizeNumber(inputs.length, MAX_DIMENSION);
+    const slope = sanitizeNumber(inputs.slope, MAX_SLOPE);
 
-  // 1. Calculate Areas
-  // Prompt Formula: Area Total = Width * Length
-  const areaTotal = width * length;
+    // 2. Whitelist Validation
+    const safeCategory = Object.values(TileCategory).includes(inputs.category) 
+      ? inputs.category 
+      : TileCategory.CERAMICA;
 
-  // Prompt Formula: Area Corrigida = Area Total * (1 + Inclinação/100)
-  const areaCorrected = areaTotal * (1 + slope / 100);
-
-  // Get selected tile model
-  const models = TILE_DATA[category];
-  const selectedModel = models.find(m => m.id === tileModelId) || models[0];
-
-  // 2. Tile Quantity
-  // Logic: Area Corrigida * Rendimento
-  const tileCount = Math.ceil(areaCorrected * selectedModel.yieldPerSqm);
-
-  // 3. Battens (Ripas)
-  let battenCount = 0;
-  let battenTotalLength = 0;
-
-  if (!selectedModel.isFibrocement && selectedModel.battenSpacing) {
-    // Prompt Formula: Number of Ripas = (Comprimento do telhado / Espaçamento) + 1
-    // Note: Spacing is in cm, length is in m. Convert spacing to m.
-    const spacingInMeters = selectedModel.battenSpacing / 100;
+    const availableModels = TILE_DATA[safeCategory];
+    let selectedModel = availableModels.find(m => m.id === inputs.tileModelId);
     
-    // We use the roof length (the run of the rafter + slope usually, but prompt says "Comprimento do Telhado"). 
-    // Given the simplicity, we use input Length.
-    battenCount = Math.ceil((length / spacingInMeters) + 1);
+    if (!selectedModel) {
+      selectedModel = availableModels[0];
+    }
 
-    // Prompt Formula: Comprimento Total = Numero de Ripas * Largura
-    battenTotalLength = battenCount * width;
+    // 3. Core Calculation Logic
+    
+    // Area
+    const areaTotal = width * length;
+    const areaCorrected = areaTotal * (1 + slope / 100);
+
+    // Tile Quantity
+    const tileCount = Math.ceil(areaCorrected * selectedModel.yieldPerSqm);
+
+    // Structure (Wood) & Fixation Logic
+    let woodTotalLength = 0;
+    let woodLabel = "Ripas (Madeira)";
+    let fixationCount = 0;
+    let fixationLabel = "Pregos (p/ Ripas)";
+
+    // CONDITIONAL LOGIC BASED ON CATEGORY
+    if (safeCategory === TileCategory.FIBROCIMENTO) {
+      // --- FIBROCIMENTO ---
+      woodLabel = "Metragem linear de Vigas/Terças";
+      fixationLabel = "Parafusos (Fix. Telha)";
+      
+      // Formula: (Area Total / Spacing 1.10) * 1.10 Margin
+      // Using areaTotal (flat) as per request logic "Area Total / Espacamento", 
+      // but usually areaCorrected is safer for sloped roofs. 
+      // Assuming the user meant the base formula structure applied to the actual roof area.
+      if (SPACING_FIBROCIMENTO > 0) {
+        woodTotalLength = (areaCorrected / SPACING_FIBROCIMENTO) * WOOD_LOSS_MARGIN;
+      }
+      
+      // Fixation: Tiles * 4
+      fixationCount = tileCount * SCREWS_PER_TILE_FIBROCIMENTO;
+
+    } else if (safeCategory === TileCategory.ECOLOGICA) {
+      // --- ECOLOGICA ---
+      woodLabel = "Metragem linear de Caibros/Apoios";
+      fixationLabel = "Fixadores (Fix. Telha)";
+
+      // Formula: (Area Total / Spacing 0.50) * 1.10 Margin
+      if (SPACING_ECOLOGICA > 0) {
+        woodTotalLength = (areaCorrected / SPACING_ECOLOGICA) * WOOD_LOSS_MARGIN;
+      }
+
+      // Fixation: Tiles * 18
+      fixationCount = tileCount * SCREWS_PER_TILE_ECOLOGICA;
+
+    } else {
+      // --- CERAMICA, CONCRETO, ESMALTADA (Standard Batten Logic) ---
+      woodLabel = "Ripas (Madeira)";
+      fixationLabel = "Pregos (p/ Ripas)";
+      
+      // Batten Calculation (Old Logic)
+      // Number of rows = (Slope Length / Spacing) + 1
+      // Total Length = Rows * Width
+      if (selectedModel.battenSpacing && length > 0) {
+        const spacingInMeters = selectedModel.battenSpacing / 100;
+        
+        if (spacingInMeters > 0.01) {
+          const battenRows = Math.ceil((length / spacingInMeters) + 1);
+          woodTotalLength = battenRows * width;
+        }
+      }
+
+      // Nail Calculation
+      // 1 Nail per intersection with Rafter (approx 50cm)
+      if (woodTotalLength > 0 && RAFTER_SPACING_METERS > 0) {
+         fixationCount = Math.ceil(woodTotalLength / RAFTER_SPACING_METERS);
+      }
+    }
+
+    // 4. Return Results
+    return {
+      areaTotal: sanitizeNumber(areaTotal, Number.MAX_SAFE_INTEGER),
+      areaCorrected: sanitizeNumber(areaCorrected, Number.MAX_SAFE_INTEGER),
+      tileCount: sanitizeNumber(tileCount, Number.MAX_SAFE_INTEGER),
+      
+      woodTotalLength: sanitizeNumber(woodTotalLength, Number.MAX_SAFE_INTEGER),
+      woodLabel,
+      
+      fixationCount: sanitizeNumber(fixationCount, Number.MAX_SAFE_INTEGER),
+      fixationLabel
+    };
+
+  } catch (error) {
+    throw new Error("Erro no processamento matemático.");
   }
-
-  // 4. Nails (Pregos)
-  // Prompt Formula: Qty Telhas * Pregos por Telha
-  const nailCount = tileCount * selectedModel.nailsPerTile;
-
-  return {
-    areaTotal,
-    areaCorrected,
-    tileCount,
-    battenCount,
-    battenTotalLength,
-    nailCount,
-  };
 };

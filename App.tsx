@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { CalculatorForm } from './components/CalculatorForm';
 import { ResultsDisplay } from './components/ResultsDisplay';
-import { CalculatorInputs, CalculationResults, TileCategory, TileModel } from './types';
+import { CalculatorInputs, CalculationResults, TileCategory } from './types';
 import { calculateRoof } from './services/calculationService';
 import { TILE_DATA } from './constants';
+import { AlertTriangle } from 'lucide-react';
 
 const App: React.FC = () => {
   // Default Initial State
@@ -20,21 +21,33 @@ const App: React.FC = () => {
   });
 
   const [results, setResults] = useState<CalculationResults | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleCalculate = () => {
-    // Basic validation
+    setError(null); // Clear previous errors
+
+    // 1. Basic UI Validation
     if (inputs.width <= 0 || inputs.length <= 0) {
-      alert("Por favor, informe a largura e o comprimento do telhado.");
+      setError("Por favor, informe valores válidos para largura e comprimento.");
       return;
     }
-    const res = calculateRoof(inputs);
-    setResults(res);
-    
-    // Smooth scroll to results on mobile
-    if (window.innerWidth < 768) {
-      setTimeout(() => {
-        document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+
+    try {
+      // 2. Safe Execution
+      const res = calculateRoof(inputs);
+      setResults(res);
+      
+      // Smooth scroll to results on mobile
+      if (window.innerWidth < 768) {
+        setTimeout(() => {
+          document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    } catch (err) {
+      // 3. Secure Error Handling (No stack trace exposure to user)
+      console.error("Calculation Error:", err); // Log for developer
+      setError("Ocorreu um erro inesperado ao realizar o cálculo. Verifique os dados inseridos.");
+      setResults(null);
     }
   };
 
@@ -56,6 +69,16 @@ const App: React.FC = () => {
 
           {/* Right Column: Results */}
           <div id="results-section" className="lg:col-span-7">
+            {error && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded shadow-sm flex items-center gap-3">
+                <AlertTriangle className="text-red-500" />
+                <div>
+                  <h3 className="text-red-800 font-bold text-sm">Atenção</h3>
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              </div>
+            )}
+            
             <ResultsDisplay 
               results={results}
               inputs={inputs}

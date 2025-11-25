@@ -1,28 +1,41 @@
 import { TileCategory, TileModel } from './types';
 
+// Standard distance between rafters (caibros) in meters. 
+// Used to calculate nails (1 nail per intersection of Batten x Rafter).
+export const RAFTER_SPACING_METERS = 0.50; 
+
+// Structural Spacing Logic (Meters)
+export const SPACING_FIBROCIMENTO = 1.10;
+export const SPACING_ECOLOGICA = 0.50;
+export const WOOD_LOSS_MARGIN = 1.10; // +10%
+
+// Fixation Logic (Units per Tile)
+export const SCREWS_PER_TILE_FIBROCIMENTO = 4;
+export const SCREWS_PER_TILE_ECOLOGICA = 18;
+
 export const TILE_DATA: Record<TileCategory, TileModel[]> = {
   [TileCategory.CERAMICA]: [
-    { id: 'portuguesa', name: 'Portuguesa', yieldPerSqm: 17.5, battenSpacing: 32, nailsPerTile: 2 },
-    { id: 'romana', name: 'Romana', yieldPerSqm: 16, battenSpacing: 32, nailsPerTile: 2 },
-    { id: 'francesa', name: 'Francesa', yieldPerSqm: 15, battenSpacing: 32, nailsPerTile: 2 },
-    { id: 'italiana', name: 'Italiana', yieldPerSqm: 13, battenSpacing: 32, nailsPerTile: 2 },
+    { id: 'portuguesa', name: 'Portuguesa', yieldPerSqm: 17.5, battenSpacing: 32 },
+    { id: 'romana', name: 'Romana', yieldPerSqm: 16, battenSpacing: 32 },
+    { id: 'francesa', name: 'Francesa', yieldPerSqm: 15, battenSpacing: 32 },
+    { id: 'italiana', name: 'Italiana', yieldPerSqm: 13, battenSpacing: 32 },
   ],
   [TileCategory.CONCRETO]: [
-    { id: 'eurotop', name: 'Eurotop', yieldPerSqm: 10.4, battenSpacing: 34, nailsPerTile: 1 },
+    { id: 'eurotop', name: 'Eurotop', yieldPerSqm: 10.4, battenSpacing: 34 },
   ],
   [TileCategory.ESMALTADA]: [
-    { id: 'americana', name: 'Americana', yieldPerSqm: 12, battenSpacing: 33, nailsPerTile: 2 },
-    { id: 'thermolev', name: 'Thermolev', yieldPerSqm: 5.5, battenSpacing: 33, nailsPerTile: 2 },
+    { id: 'americana', name: 'Americana', yieldPerSqm: 12, battenSpacing: 33 },
+    { id: 'thermolev', name: 'Thermolev', yieldPerSqm: 5.5, battenSpacing: 33 },
   ],
   [TileCategory.ECOLOGICA]: [
-    { id: 'onduline_stilo', name: 'Onduline Stilo', yieldPerSqm: 1.33, battenSpacing: 35, nailsPerTile: 4 },
+    { id: 'onduline_stilo', name: 'Onduline Stilo', yieldPerSqm: 1.33, battenSpacing: 35 },
   ],
   [TileCategory.FIBROCIMENTO]: [
     // Using prompt specified "Rendimento definido" even if not technically correct
-    { id: 'fibro_183', name: '1,83 x 1,10m', yieldPerSqm: 2, isFibrocement: true, nailsPerTile: 6 },
-    { id: 'fibro_244', name: '2,44 x 1,10m', yieldPerSqm: 2.68, isFibrocement: true, nailsPerTile: 8 },
-    { id: 'fibro_305', name: '3,05 x 1,10m', yieldPerSqm: 3.36, isFibrocement: true, nailsPerTile: 10 },
-    { id: 'fibro_366', name: '3,66 x 1,10m', yieldPerSqm: 4, isFibrocement: true, nailsPerTile: 12 },
+    { id: 'fibro_183', name: '1,83 x 1,10m', yieldPerSqm: 2, isFibrocement: true },
+    { id: 'fibro_244', name: '2,44 x 1,10m', yieldPerSqm: 2.68, isFibrocement: true },
+    { id: 'fibro_305', name: '3,05 x 1,10m', yieldPerSqm: 3.36, isFibrocement: true },
+    { id: 'fibro_366', name: '3,66 x 1,10m', yieldPerSqm: 4, isFibrocement: true },
   ],
 };
 

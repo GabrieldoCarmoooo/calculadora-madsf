@@ -11,7 +11,6 @@ export interface TileModel {
   name: string;
   yieldPerSqm: number; // Telhas por m²
   battenSpacing?: number; // cm (undefined if not using battens)
-  nailsPerTile: number; // Pregos por telha (can be overridden by size logic)
   isFibrocement?: boolean;
 }
 
@@ -27,7 +26,11 @@ export interface CalculationResults {
   areaTotal: number;
   areaCorrected: number;
   tileCount: number;
-  battenCount: number;
-  battenTotalLength: number;
-  nailCount: number;
+  
+  // Generic fields to handle dynamic labels (Ripas vs Vigas, Pregos vs Parafusos)
+  woodTotalLength: number; 
+  woodLabel: string; // "Ripas", "Vigas/Terças", "Caibros/Apoios"
+  
+  fixationCount: number;
+  fixationLabel: string; // "Pregos", "Parafusos", "Fixadores"
 }

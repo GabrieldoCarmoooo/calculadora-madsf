@@ -52,8 +52,8 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
       body: [
         ['Área de Telhado', `${results.areaCorrected.toFixed(2)} m²`, `Corrigida com ${inputs.slope}% de inclinação`],
         ['Telhas', `${results.tileCount} un`, `${selectedModel.yieldPerSqm} telhas/m²`],
-        ['Ripas (Madeira)', `${results.battenTotalLength.toFixed(2)} metros`, `${results.battenCount} peças`],
-        ['Pregos', `${results.nailCount} un`, `${selectedModel.nailsPerTile} pregos/telha`],
+        [results.woodLabel, `${results.woodTotalLength.toFixed(2)} metros`, 'Total linear estimado'],
+        [results.fixationLabel, `${results.fixationCount} un`, `Quantidade estimada`],
       ],
       theme: 'striped',
       headStyles: { fillColor: [255, 203, 0], textColor: [0,0,0] }, // brand-yellow
@@ -106,28 +106,28 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
               <p className="text-xs text-[#5c1302]/70 mt-1">unidades</p>
             </div>
 
-            {/* Battens */}
+            {/* Structure (Ripas/Vigas) */}
             <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-600">
               <div className="flex justify-between items-start">
                 <div>
-                   <p className="text-sm text-amber-800 font-semibold uppercase tracking-wider">Ripas (Madeira)</p>
-                   {results.battenCount > 0 ? (
+                   <p className="text-sm text-amber-800 font-semibold uppercase tracking-wider">{results.woodLabel}</p>
+                   {results.woodTotalLength > 0 ? (
                     <>
-                      <p className="text-3xl font-extrabold text-amber-900">{results.battenTotalLength.toFixed(1)} <span className="text-lg">m</span></p>
-                      <p className="text-xs text-amber-700 mt-1">{results.battenCount} ripas de {inputs.width}m</p>
+                      <p className="text-3xl font-extrabold text-amber-900">{results.woodTotalLength.toFixed(1)} <span className="text-lg">m</span></p>
+                      <p className="text-xs text-amber-700 mt-1">Estimativa linear</p>
                     </>
                    ) : (
-                     <p className="text-lg font-bold text-amber-900 mt-2">Não utiliza</p>
+                     <p className="text-lg font-bold text-amber-900 mt-2">Não se aplica</p>
                    )}
                 </div>
               </div>
             </div>
 
-             {/* Nails */}
+             {/* Fixation (Pregos/Parafusos) */}
              <div className="bg-gray-100 p-4 rounded-lg border-l-4 border-gray-500">
-              <p className="text-sm text-gray-700 font-semibold uppercase tracking-wider">Pregos</p>
-              <p className="text-3xl font-extrabold text-gray-900">{results.nailCount}</p>
-              <p className="text-xs text-gray-600 mt-1">unidades</p>
+              <p className="text-sm text-gray-700 font-semibold uppercase tracking-wider">{results.fixationLabel}</p>
+              <p className="text-3xl font-extrabold text-gray-900">{results.fixationCount}</p>
+              <p className="text-xs text-gray-600 mt-1">Quantidade estimada</p>
             </div>
             
           </div>
