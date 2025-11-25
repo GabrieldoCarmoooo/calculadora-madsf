@@ -81,7 +81,6 @@ const App: React.FC = () => {
             
             <ResultsDisplay 
               results={results}
-              inputs={inputs}
             />
           </div>
 

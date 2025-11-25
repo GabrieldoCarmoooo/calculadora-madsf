@@ -1,24 +1,25 @@
 import React from 'react';
-import { CalculationResults, TileCategory, TileModel } from '../types';
+import { CalculationResults } from '../types';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { CalculatorInputs } from '../types';
-import { TILE_DATA } from '../constants';
 import { Download, Share2 } from 'lucide-react';
 
 interface Props {
   results: CalculationResults | null;
-  inputs: CalculatorInputs;
+  // We no longer rely on 'inputs' prop for display to ensure integrity. 
+  // We use results.sanitizedInputs returned from the trusted service.
 }
 
-export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
-  const selectedModel = TILE_DATA[inputs.category].find(m => m.id === inputs.tileModelId);
+export const ResultsDisplay: React.FC<Props> = ({ results }) => {
 
   const generatePDF = () => {
-    if (!results || !selectedModel) return;
+    if (!results) return;
 
     const doc = new jsPDF();
     
+    // Trusted data source
+    const data = results.sanitizedInputs;
+
     // Header
     doc.setFillColor(92, 19, 2); // brand-red
     doc.rect(0, 0, 210, 30, 'F');
@@ -26,7 +27,7 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
     doc.setFontSize(22);
     doc.text("Relatório de Materiais - Calculadora MADSF", 105, 20, { align: 'center' });
 
-    // Inputs Summary
+    // Inputs Summary (Using Sanitized Data)
     doc.setTextColor(0, 0, 0);
     doc.setFontSize(12);
     doc.text(`Data: ${new Date().toLocaleDateString()}`, 14, 45);
@@ -35,9 +36,9 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
       startY: 50,
       head: [['Parâmetro', 'Valor']],
       body: [
-        ['Dimensões', `${inputs.width}m x ${inputs.length}m`],
-        ['Inclinação', `${inputs.slope}%`],
-        ['Tipo de Telha', `${inputs.category} - ${selectedModel.name}`],
+        ['Dimensões', `${data.width}m x ${data.length}m`],
+        ['Inclinação', `${data.slope}%`],
+        ['Tipo de Telha', `${data.category} - ${data.modelName}`],
       ],
       theme: 'grid',
       headStyles: { fillColor: [92, 19, 2] },
@@ -50,8 +51,8 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
       startY: finalY,
       head: [['Material', 'Quantidade', 'Detalhes']],
       body: [
-        ['Área de Telhado', `${results.areaCorrected.toFixed(2)} m²`, `Corrigida com ${inputs.slope}% de inclinação`],
-        ['Telhas', `${results.tileCount} un`, `${selectedModel.yieldPerSqm} telhas/m²`],
+        ['Área de Telhado', `${results.areaCorrected.toFixed(2)} m²`, `Corrigida com ${data.slope}% de inclinação`],
+        ['Telhas', `${results.tileCount} un`, `Baseado no modelo ${data.modelName}`],
         [results.woodLabel, `${results.woodTotalLength.toFixed(2)} metros`, 'Total linear estimado'],
         [results.fixationLabel, `${results.fixationCount} un`, `Quantidade estimada`],
       ],
@@ -67,7 +68,7 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
     doc.save('orcamento-telhado.pdf');
   };
 
-  if (!results || !selectedModel) {
+  if (!results) {
     return (
       <div className="bg-white p-8 rounded-xl shadow-lg flex flex-col items-center justify-center text-center h-full min-h-[400px]">
         <div className="bg-brand-yellow/10 p-6 rounded-full mb-4">
@@ -79,12 +80,15 @@ export const ResultsDisplay: React.FC<Props> = ({ results, inputs }) => {
     );
   }
 
+  // Use sanitized inputs for display as well
+  const { category, modelName } = results.sanitizedInputs;
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
         <div className="bg-brand-red p-6 border-b border-brand-red/10">
-          <h3 className="text-white font-bold text-2xl">{inputs.category}</h3>
-          <p className="text-brand-yellow font-medium text-lg">{selectedModel.name}</p>
+          <h3 className="text-white font-bold text-2xl">{category}</h3>
+          <p className="text-brand-yellow font-medium text-lg">{modelName}</p>
         </div>
 
         <div className="p-6">

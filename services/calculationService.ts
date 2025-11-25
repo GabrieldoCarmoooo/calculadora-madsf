@@ -28,13 +28,16 @@ export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
     const slope = sanitizeNumber(inputs.slope, MAX_SLOPE);
 
     // 2. Whitelist Validation
+    // Validate Category matches Enum
     const safeCategory = Object.values(TileCategory).includes(inputs.category) 
       ? inputs.category 
       : TileCategory.CERAMICA;
 
-    const availableModels = TILE_DATA[safeCategory];
+    // Validate Model exists in that Category
+    const availableModels = TILE_DATA[safeCategory] || TILE_DATA[TileCategory.CERAMICA];
     let selectedModel = availableModels.find(m => m.id === inputs.tileModelId);
     
+    // Fallback to first model if ID is invalid or not found
     if (!selectedModel) {
       selectedModel = availableModels[0];
     }
@@ -60,15 +63,10 @@ export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
       woodLabel = "Metragem linear de Vigas/Terças";
       fixationLabel = "Parafusos (Fix. Telha)";
       
-      // Formula: (Area Total / Spacing 1.10) * 1.10 Margin
-      // Using areaTotal (flat) as per request logic "Area Total / Espacamento", 
-      // but usually areaCorrected is safer for sloped roofs. 
-      // Assuming the user meant the base formula structure applied to the actual roof area.
       if (SPACING_FIBROCIMENTO > 0) {
         woodTotalLength = (areaCorrected / SPACING_FIBROCIMENTO) * WOOD_LOSS_MARGIN;
       }
       
-      // Fixation: Tiles * 4
       fixationCount = tileCount * SCREWS_PER_TILE_FIBROCIMENTO;
 
     } else if (safeCategory === TileCategory.ECOLOGICA) {
@@ -76,12 +74,10 @@ export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
       woodLabel = "Metragem linear de Caibros/Apoios";
       fixationLabel = "Fixadores (Fix. Telha)";
 
-      // Formula: (Area Total / Spacing 0.50) * 1.10 Margin
       if (SPACING_ECOLOGICA > 0) {
         woodTotalLength = (areaCorrected / SPACING_ECOLOGICA) * WOOD_LOSS_MARGIN;
       }
 
-      // Fixation: Tiles * 18
       fixationCount = tileCount * SCREWS_PER_TILE_ECOLOGICA;
 
     } else {
@@ -89,9 +85,6 @@ export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
       woodLabel = "Ripas (Madeira)";
       fixationLabel = "Pregos (p/ Ripas)";
       
-      // Batten Calculation (Old Logic)
-      // Number of rows = (Slope Length / Spacing) + 1
-      // Total Length = Rows * Width
       if (selectedModel.battenSpacing && length > 0) {
         const spacingInMeters = selectedModel.battenSpacing / 100;
         
@@ -101,15 +94,20 @@ export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
         }
       }
 
-      // Nail Calculation
-      // 1 Nail per intersection with Rafter (approx 50cm)
       if (woodTotalLength > 0 && RAFTER_SPACING_METERS > 0) {
          fixationCount = Math.ceil(woodTotalLength / RAFTER_SPACING_METERS);
       }
     }
 
-    // 4. Return Results
+    // 4. Return Results including Sanitized Inputs (Integrity Check)
     return {
+      sanitizedInputs: {
+        width,
+        length,
+        slope,
+        category: safeCategory,
+        modelName: selectedModel.name
+      },
       areaTotal: sanitizeNumber(areaTotal, Number.MAX_SAFE_INTEGER),
       areaCorrected: sanitizeNumber(areaCorrected, Number.MAX_SAFE_INTEGER),
       tileCount: sanitizeNumber(tileCount, Number.MAX_SAFE_INTEGER),

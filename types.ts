@@ -23,6 +23,15 @@ export interface CalculatorInputs {
 }
 
 export interface CalculationResults {
+  // Integrity: Return the actual inputs used for calculation (after sanitization)
+  sanitizedInputs: {
+    width: number;
+    length: number;
+    slope: number;
+    category: TileCategory;
+    modelName: string;
+  };
+
   areaTotal: number;
   areaCorrected: number;
   tileCount: number;

@@ -13,9 +13,12 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
     onChange({ ...inputs, [field]: value });
   };
 
-  // Secure handler for numbers: enforces positive values at input level
+  // Secure handler for numbers: enforces positive values and length limits
   const handleNumberChange = (field: keyof CalculatorInputs, rawValue: string) => {
-    // Parse, prevent NaN, and enforce absolute value (no negatives)
+    // 1. Prevent massive string injection (UI DoS mitigation)
+    if (rawValue.length > 8) return; 
+
+    // 2. Parse, prevent NaN, and enforce absolute value (no negatives)
     const val = parseFloat(rawValue);
     const safeValue = isNaN(val) ? 0 : Math.abs(val);
     handleChange(field, safeValue);
@@ -23,7 +26,7 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCategory = e.target.value as TileCategory;
-    // Safety check if category exists in TILE_DATA
+    // Safety check if category exists in TILE_DATA (Whitelist check)
     if (TILE_DATA[newCategory]) {
       const defaultModel = TILE_DATA[newCategory][0].id;
       onChange({
@@ -50,7 +53,8 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
               type="number"
               min="0"
               step="0.1"
-              value={inputs.width || ''} // Handle 0 as empty string if desired, or keep 0
+              maxLength={6}
+              value={inputs.width || ''} // Handle 0 as empty string if desired
               onChange={(e) => handleNumberChange('width', e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none transition"
               placeholder="Ex: 10.0"
@@ -62,6 +66,7 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
               type="number"
               min="0"
               step="0.1"
+              maxLength={6}
               value={inputs.length || ''}
               onChange={(e) => handleNumberChange('length', e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none transition"
@@ -77,6 +82,7 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
               type="number"
               min="0"
               max="100"
+              maxLength={3}
               value={inputs.slope}
               onChange={(e) => handleNumberChange('slope', e.target.value)}
               className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-brand-yellow focus:border-transparent outline-none transition"
