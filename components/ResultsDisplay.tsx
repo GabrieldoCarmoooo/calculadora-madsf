@@ -141,7 +141,7 @@ export const ResultsDisplay: React.FC<Props> = ({ results }) => {
             className="w-full mt-8 bg-brand-yellow hover:bg-yellow-400 text-brand-black font-bold py-3 rounded flex items-center justify-center gap-2 transition shadow-md"
           >
             <Download size={20} />
-            Baixar Orçamento em PDF
+            Baixar PDF
           </button>
         </div>
       </div>
