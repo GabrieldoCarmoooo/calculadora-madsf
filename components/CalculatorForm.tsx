@@ -2,6 +2,9 @@ import React from 'react';
 import { TileCategory, CalculatorInputs, TileModel } from '../types';
 import { TILE_DATA } from '../constants';
 
+// ========================================================================
+// INTERFACE DE PROPS
+// ========================================================================
 interface Props {
   inputs: CalculatorInputs;
   onChange: (inputs: CalculatorInputs) => void;
@@ -9,11 +12,19 @@ interface Props {
 }
 
 export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate }) => {
+  
+  // ========================================================================
+  // HANDLERS GENÉRICOS
+  // ========================================================================
   const handleChange = (field: keyof CalculatorInputs, value: any) => {
     onChange({ ...inputs, [field]: value });
   };
 
-  // Secure handler for numbers: enforces positive values and length limits
+  // ========================================================================
+  // VALIDAÇÃO E SEGURANÇA DE INPUTS NUMÉRICOS
+  // ========================================================================
+  // Garante que apenas números positivos sejam inseridos e previne ataques de DoS
+  // via inserção de strings gigantescas (maxLength).
   const handleNumberChange = (field: keyof CalculatorInputs, rawValue: string) => {
     // 1. Prevent massive string injection (UI DoS mitigation)
     if (rawValue.length > 8) return; 
@@ -24,28 +35,56 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
     handleChange(field, safeValue);
   };
 
+  // ========================================================================
+  // LÓGICA DE TROCA DE CATEGORIA (REGRAS DE NEGÓCIO)
+  // ========================================================================
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newCategory = e.target.value as TileCategory;
+    
     // Safety check if category exists in TILE_DATA (Whitelist check)
     if (TILE_DATA[newCategory]) {
+      // Sempre reseta para o primeiro modelo disponível da nova categoria
       const defaultModel = TILE_DATA[newCategory][0].id;
-      onChange({
+      
+      let updatedInputs = {
         ...inputs,
         category: newCategory,
         tileModelId: defaultModel,
-      });
+      };
+
+      // REGRA DE NEGÓCIO: Se for Fibrocimento, define inclinação padrão de 15%
+      // Isso é mandatório para o cálculo de sobreposição correto.
+      if (newCategory === TileCategory.FIBROCIMENTO) {
+        updatedInputs.slope = 15;
+      }
+
+      // REGRA DE NEGÓCIO: Se for Ecológica, define inclinação padrão de 27%
+      // Isso segue o manual técnico da Onduline.
+      if (newCategory === TileCategory.ECOLOGICA) {
+        updatedInputs.slope = 27;
+      }
+
+      onChange(updatedInputs);
     }
   };
 
+  // Obtém a lista de modelos baseada na categoria atual para preencher o select
   const currentModels = TILE_DATA[inputs.category];
 
   return (
     <div className="bg-white p-6 rounded-xl shadow-lg border-l-4 border-brand-red">
+      {/* ======================================================================== */}
+      {/* CABEÇALHO DO FORMULÁRIO */}
+      {/* ======================================================================== */}
       <h2 className="text-2xl font-bold text-brand-red mb-6 flex items-center gap-2">
         <span className="text-3xl">🏠</span> Dados do Telhado
       </h2>
 
       <div className="space-y-5">
+        
+        {/* ======================================================================== */}
+        {/* INPUTS DE DIMENSÃO (LARGURA E COMPRIMENTO) */}
+        {/* ======================================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-1">Largura (m)</label>
@@ -75,8 +114,14 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
           </div>
         </div>
 
+        {/* ======================================================================== */}
+        {/* INPUT DE INCLINAÇÃO */}
+        {/* ======================================================================== */}
+        {/* O Label muda dinamicamente dependendo da regra de negócio (Implementação futura se necessário, atualmente fixo ou alterado via estado) */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Inclinação (%)</label>
+          <label className="block text-sm font-bold text-gray-700 mb-1">
+            {inputs.category === TileCategory.ECOLOGICA ? "Inclinação Mínima (%)" : "Inclinação (%)"}
+          </label>
           <div className="relative">
             <input
               type="number"
@@ -94,6 +139,9 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
 
         <div className="h-px bg-gray-200 my-4"></div>
 
+        {/* ======================================================================== */}
+        {/* SELETORES DE TIPO E MODELO */}
+        {/* ======================================================================== */}
         <div>
           <label className="block text-sm font-bold text-brand-red mb-1">Tipo de Telha</label>
           <select
@@ -124,6 +172,9 @@ export const CalculatorForm: React.FC<Props> = ({ inputs, onChange, onCalculate 
 
         <div className="h-px bg-gray-200 my-4"></div>
         
+        {/* ======================================================================== */}
+        {/* BOTÃO DE AÇÃO */}
+        {/* ======================================================================== */}
         <button
           onClick={onCalculate}
           className="w-full mt-2 bg-brand-red hover:bg-[#4a0f02] text-white font-extrabold text-lg py-4 rounded-md shadow-lg transform hover:-translate-y-1 transition duration-200"

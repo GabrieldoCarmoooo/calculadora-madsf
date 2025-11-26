@@ -1,3 +1,12 @@
+
+// ========================================================================
+// ENUMS E CATEGORIZAÇÃO
+// ========================================================================
+/**
+ * Define as categorias principais de telhas suportadas pelo sistema.
+ * Este enum é crucial para o 'Switch Case' na lógica de cálculo (calculationService),
+ * pois define qual algoritmo será utilizado (Grade vs Rendimento).
+ */
 export enum TileCategory {
   CERAMICA = 'Cerâmica',
   CONCRETO = 'Concreto',
@@ -6,24 +15,48 @@ export enum TileCategory {
   FIBROCIMENTO = 'Fibrocimento 1,10m',
 }
 
+// ========================================================================
+// DEFINIÇÃO DE PRODUTO (MODELO DE TELHA)
+// ========================================================================
+/**
+ * Interface que representa um produto (modelo de telha) no banco de dados estático.
+ * Contém as propriedades físicas e de rendimento necessárias para os cálculos.
+ */
 export interface TileModel {
-  id: string;
-  name: string;
-  yieldPerSqm: number; // Telhas por m²
-  battenSpacing?: number; // cm (undefined if not using battens)
-  isFibrocement?: boolean;
+  id: string;              // Identificador único (slug)
+  name: string;            // Nome de exibição (Ex: "Romana", "Onduline Stilo")
+  yieldPerSqm: number;     // Rendimento médio (Telhas/m²) - Usado para Cerâmica/Concreto
+  battenSpacing?: number;  // Espaçamento de ripas em cm (Opcional, pois Fibrocimento não usa ripas)
+  isFibrocement?: boolean; // Flag auxiliar para identificar lógica de fibrocimento
 }
 
+// ========================================================================
+// DADOS DE ENTRADA (INPUT DO USUÁRIO)
+// ========================================================================
+/**
+ * Representa o estado bruto do formulário preenchido pelo usuário.
+ * Estes dados devem passar por sanitização antes de serem usados em cálculos matemáticos.
+ */
 export interface CalculatorInputs {
-  width: number;
-  length: number;
-  slope: number;
-  category: TileCategory;
-  tileModelId: string;
+  width: number;           // Largura do telhado em metros
+  length: number;          // Comprimento (ou Água) em metros
+  slope: number;           // Inclinação em porcentagem (%)
+  category: TileCategory;  // Categoria selecionada
+  tileModelId: string;     // ID do modelo específico selecionado
 }
 
+// ========================================================================
+// DADOS DE SAÍDA (RESULTADO DO SERVIÇO)
+// ========================================================================
+/**
+ * Contrato de retorno da função 'calculateRoof'.
+ * Contém os resultados matemáticos e também metadados para renderização da UI/PDF.
+ */
 export interface CalculationResults {
-  // Integrity: Return the actual inputs used for calculation (after sanitization)
+  // INTEGRIDADE E SEGURANÇA:
+  // Retorna os inputs que foram REALMENTE usados no cálculo (pós-sanitização).
+  // O PDF e a UI devem usar estes dados, e não o estado local do formulário, 
+  // para garantir que o relatório reflita a realidade do cálculo (Fonte de Verdade).
   sanitizedInputs: {
     width: number;
     length: number;
@@ -32,14 +65,17 @@ export interface CalculationResults {
     modelName: string;
   };
 
-  areaTotal: number;
-  areaCorrected: number;
-  tileCount: number;
+  // RESULTADOS DE ÁREA E TELHAS
+  areaTotal: number;       // Área plana (Largura x Comprimento)
+  areaCorrected: number;   // Área real considerando a inclinação (ou geometria da água)
+  tileCount: number;       // Quantidade final de telhas (já com margens de perda)
   
-  // Generic fields to handle dynamic labels (Ripas vs Vigas, Pregos vs Parafusos)
-  woodTotalLength: number; 
-  woodLabel: string; // "Ripas", "Vigas/Terças", "Caibros/Apoios"
+  // RESULTADOS DE ESTRUTURA (MADEIRA/METAL)
+  // Usamos campos genéricos para permitir labels dinâmicos dependendo do tipo de telha.
+  woodTotalLength: number; // Metragem linear total calculada
+  woodLabel: string;       // Label dinâmico: "Ripas", "Vigas/Terças" ou "Caibros/Apoios"
   
-  fixationCount: number;
-  fixationLabel: string; // "Pregos", "Parafusos", "Fixadores"
+  // RESULTADOS DE FIXAÇÃO
+  fixationCount: number;   // Quantidade total de fixadores
+  fixationLabel: string;   // Label dinâmico: "Pregos", "Parafusos" ou "Fixadores"
 }
