@@ -1,47 +1,34 @@
 import { TileCategory, TileModel } from './types';
 
 // ========================================================================
-// CONFIGURAÇÕES ESTRUTURAIS GERAIS
+// CONSTANTES DE CÁLCULO E ESTRUTURA
 // ========================================================================
 
-// Distância padrão entre caibros em metros. 
-// Usado para calcular pregos (1 prego por interseção de Ripa x Caibro).
-export const RAFTER_SPACING_METERS = 0.50; 
+// Margem de segurança para cálculo de madeira (10%)
+export const WOOD_LOSS_MARGIN = 1.10;
 
-// Espaçamento estrutural (Vigas/Terças/Apoios) em metros por categoria.
-// Define a distância entre os apoios de madeira.
-export const SPACING_FIBROCIMENTO = 1.10;
-export const SPACING_ECOLOGICA = 0.46; // 46cm conforme manual de instalação
-export const WOOD_LOSS_MARGIN = 1.10; // Margem de segurança de +10% para madeira
+// Espaçamento padrão de caibros (em metros) - Usado para cálculo de pregos
+export const RAFTER_SPACING_METERS = 0.50;
 
 // ========================================================================
-// CONSTANTES DE TELHAS: FIBROCIMENTO
+// CONSTANTES: FIBROCIMENTO
 // ========================================================================
-
-// Dimensões nominais e sobreposições para cálculo de Fibrocimento.
-export const NOMINAL_WIDTH_FIBRO = 1.10;
-export const OVERLAP_WIDTH_FIBRO = 0.05; // 5cm de sobreposição lateral
-export const OVERLAP_LENGTH_FIBRO_STD = 0.14; // 14cm para inclinação >= 15%
-export const OVERLAP_LENGTH_FIBRO_LOW = 0.20; // 20cm para inclinação < 15%
-
-// ========================================================================
-// CONSTANTES DE TELHAS: ECOLÓGICA
-// ========================================================================
-
-// Dimensões nominais e sobreposições para cálculo de Telha Ecológica.
-// Necessárias para o algoritmo de Grade (Fileiras x Colunas).
-export const NOMINAL_WIDTH_ECOLOGICA = 0.82;
-export const LENGTH_ECOLOGICA = 2.00;
-export const OVERLAP_WIDTH_ECOLOGICA = 0.10;
-export const OVERLAP_LENGTH_ECOLOGICA = 0.16;
+export const SPACING_FIBROCIMENTO = 1.10;      // Espaçamento máximo de apoios (Vigas)
+export const SCREWS_PER_TILE_FIBROCIMENTO = 2; // Parafusos de fixação por telha
+export const NOMINAL_WIDTH_FIBRO = 1.10;       // Largura nominal da telha
+export const OVERLAP_WIDTH_FIBRO = 0.05;       // Sobreposição lateral (5cm)
+export const OVERLAP_LENGTH_FIBRO_STD = 0.14;  // Sobreposição longitudinal padrão (>= 15 graus)
+export const OVERLAP_LENGTH_FIBRO_LOW = 0.20;  // Sobreposição longitudinal baixa inclinação (< 15 graus)
 
 // ========================================================================
-// LÓGICA DE FIXAÇÃO
+// CONSTANTES: ECOLÓGICA
 // ========================================================================
-
-// Quantidade de fixadores (parafusos/pregos) por unidade de telha.
-export const SCREWS_PER_TILE_FIBROCIMENTO = 4;
-export const SCREWS_PER_TILE_ECOLOGICA = 18;
+export const SPACING_ECOLOGICA = 0.46;         // Espaçamento de apoios (conforme regra de 46cm)
+export const SCREWS_PER_TILE_ECOLOGICA = 18;   // Fixadores por telha
+export const NOMINAL_WIDTH_ECOLOGICA = 0.82;   // Largura nominal considerada no cálculo
+export const LENGTH_ECOLOGICA = 2.00;          // Comprimento nominal da telha
+export const OVERLAP_WIDTH_ECOLOGICA = 0.10;   // Sobreposição lateral (~10cm)
+export const OVERLAP_LENGTH_ECOLOGICA = 0.16;  // Sobreposição longitudinal (~16cm para resultar em ~1.84m útil)
 
 // ========================================================================
 // BANCO DE DADOS DE TELHAS
@@ -68,22 +55,11 @@ export const TILE_DATA: Record<TileCategory, readonly TileModel[]> = Object.free
     { id: 'onduline_stilo', name: 'Onduline Stilo', yieldPerSqm: 1.33, battenSpacing: 35 },
   ]),
   [TileCategory.FIBROCIMENTO]: Object.freeze([
-    // O rendimento por m² é ignorado no novo algoritmo de Grade, mantido apenas para compatibilidade de tipos
-    { id: 'fibro_183', name: '1,83 x 1,10m', yieldPerSqm: 2, isFibrocement: true },
-    { id: 'fibro_244', name: '2,44 x 1,10m', yieldPerSqm: 2.68, isFibrocement: true },
-    { id: 'fibro_305', name: '3,05 x 1,10m', yieldPerSqm: 3.36, isFibrocement: true },
-    { id: 'fibro_366', name: '3,66 x 1,10m', yieldPerSqm: 4, isFibrocement: true },
+    // Atualização refatorada: O valor 'yieldPerSqm' aqui representa a ÁREA ÚTIL (m²) da peça,
+    // conforme solicitado na regra de negócio atualizada.
+    { id: 'fibro_183', name: '1,83 x 1,10m', yieldPerSqm: 1.78, isFibrocement: true },
+    { id: 'fibro_244', name: '2,44 x 1,10m', yieldPerSqm: 2.42, isFibrocement: true },
+    { id: 'fibro_305', name: '3,05 x 1,10m', yieldPerSqm: 3.06, isFibrocement: true },
+    { id: 'fibro_366', name: '3,66 x 1,10m', yieldPerSqm: 3.70, isFibrocement: true },
   ]),
-});
-
-// ========================================================================
-// CORES DO TEMA
-// ========================================================================
-
-// Paleta de cores oficial da aplicação
-export const COLORS = Object.freeze({
-  primary: '#5c1302',
-  secondary: '#ffcb00',
-  white: '#ffffff',
-  black: '#000000',
 });

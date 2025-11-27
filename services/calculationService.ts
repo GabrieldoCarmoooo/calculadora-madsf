@@ -24,7 +24,18 @@ import {
 // Isso previne ataques de Negação de Serviço (DoS) que poderiam ocorrer
 // se o sistema tentasse alocar arrays gigantescos ou loops infinitos.
 const MAX_DIMENSION = 1000; // Limite de 1km para largura/comprimento
-const MAX_SLOPE = 300; // Limite de inclinação exagerada
+const MAX_SLOPE = 400; // Limite aumentado para 400 para permitir até 75 graus (~373%)
+
+// ========================================================================
+// HELPER: CONVERSÃO MATEMÁTICA
+// ========================================================================
+/**
+ * Converte porcentagem de inclinação para graus.
+ * Fórmula: arctan(porcentagem / 100) * (180 / PI)
+ */
+export const percentageToDegrees = (percentage: number): number => {
+  return (Math.atan(percentage / 100) * 180) / Math.PI;
+};
 
 // ========================================================================
 // HELPER: SANITIZAÇÃO DE NÚMEROS
@@ -162,11 +173,6 @@ export const calculateRoof = (inputs: CalculatorInputs): CalculationResults => {
       
       // B. Interpretação do Input 'Length'
       // Para Ecológica, assumimos que o usuário inseriu o comprimento da água (inclinado)
-      // ou calculamos a água se necessário. A regra atual trata o input 'length' como horizontal
-      // e aplicamos a correção de inclinação para obter a água real, para manter consistência com o formulário.
-      // (Atualização: O prompt anterior pediu para não aplicar correção na área, mas matematicamente
-      // precisamos saber o tamanho da água para saber quantas fileiras cabem).
-      // Se assumirmos que o usuário JÁ digitou a água no input, usamos 'length' direto.
       // SEGUINDO A LÓGICA DO ÚLTIMO FIX: O 'length' inserido é tratado como comprimento da água.
       const waterLength = length; 
 
